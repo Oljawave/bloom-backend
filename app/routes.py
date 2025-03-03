@@ -36,11 +36,12 @@ def get_orders(user_id):
 
         orders = []
         for order in response.data:
-
             formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
 
-            short_address = f'г. {order["city"]}, ул. {order["street"]}, {order["building"]}'
-        
+            short_address = f'г. {order["city"]}, ул. {order["street"]} {order["building"]}'
+            if order.get("apartment"):  
+                short_address += f', кв. {order["apartment"]}'  
+
             phone_clean = re.sub(r"\D", "", order["phone"]) 
             if len(phone_clean) == 11:
                 formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
@@ -59,6 +60,7 @@ def get_orders(user_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
