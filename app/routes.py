@@ -22,7 +22,7 @@ def create_order():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-
+    
 @app.route('/orders/<int:user_id>', methods=['GET'])
 def get_orders(user_id):
     try:
