@@ -22,7 +22,10 @@ def create_order():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-    
+
+from datetime import datetime
+import re
+
 @app.route('/orders/<int:user_id>', methods=['GET'])
 def get_orders(user_id):
     try:
@@ -31,22 +34,32 @@ def get_orders(user_id):
         if not response.data:
             return jsonify({"message": "Заказы не найдены"}), 404
 
-        orders = [
-            {
+        orders = []
+        for order in response.data:
+
+            formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
+
+            short_address = f'г. {order["city"]}, ул. {order["street"]}, {order["building"]}'
+        
+            phone_clean = re.sub(r"\D", "", order["phone"]) 
+            if len(phone_clean) == 11:
+                formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
+            else:
+                formatted_phone = order["phone"]  
+
+            orders.append({
                 "order_id": order["id"],
-                "dates": order["selected_dates"],
+                "dates": formatted_dates,
                 "price_range": order["price_range"],
-                "address": f'{order["city"]}, {order["street"]}, {order["building"]}, '
-                           f'кв. {order["apartment"]}, подъезд {order["entrance"]}, этаж {order["floor"]}',
-                "phone": order["phone"]
-            }
-            for order in response.data
-        ]
+                "address": short_address,
+                "phone": formatted_phone
+            })
 
         return jsonify({"orders": orders}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 
