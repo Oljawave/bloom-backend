@@ -21,6 +21,33 @@ def create_order():
         return jsonify({"error": "Failed to create order"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/orders/<int:user_id>', methods=['GET'])
+def get_orders(user_id):
+    try:
+        response = supabase.table("orders").select("*").eq("user_id", user_id).execute()
+
+        if not response.data:
+            return jsonify({"message": "Заказы не найдены"}), 404
+
+        orders = [
+            {
+                "order_id": order["id"],
+                "dates": order["selected_dates"],
+                "price_range": order["price_range"],
+                "address": f'{order["city"]}, {order["street"]}, {order["building"]}, '
+                           f'кв. {order["apartment"]}, подъезд {order["entrance"]}, этаж {order["floor"]}',
+                "phone": order["phone"]
+            }
+            for order in response.data
+        ]
+
+        return jsonify({"orders": orders}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.after_request
