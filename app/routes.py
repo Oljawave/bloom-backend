@@ -80,6 +80,10 @@ def get_all_orders():
             else:
                 formatted_phone = order["phone"]  
 
+            created_at_dt = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+            created_date = created_at_dt.strftime("%d.%m.%Y")
+            created_time = created_at_dt.strftime("%H:%M:%S")
+
             orders.append({
                 "order_id": order["id"],
                 "dates": formatted_dates,
@@ -89,7 +93,9 @@ def get_all_orders():
                 "apartment": order.get("apartment", ""),
                 "floor": order.get("floor", ""),
                 "entrance": order.get("entrance", ""),
-                "phone": formatted_phone
+                "phone": formatted_phone,
+                "created_date": created_date,  
+                "created_time": created_time  
             })
 
         return jsonify({"orders": orders}), 200
