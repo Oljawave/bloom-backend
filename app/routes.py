@@ -3,7 +3,6 @@ from flask_cors import CORS
 import json
 from app import app, supabase
 
-
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/orders', methods=['POST'])
@@ -42,7 +41,7 @@ def get_orders(user_id):
             if order.get("apartment"):  
                 short_address += f', кв. {order["apartment"]}'  
 
-            phone_clean = re.sub(r"\D", "", order["phone"]) 
+            phone_clean = re.sub(r"\D", "", order["phone"])
             if len(phone_clean) == 11:
                 formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
             else:
@@ -53,7 +52,8 @@ def get_orders(user_id):
                 "dates": formatted_dates,
                 "price_range": order["price_range"],
                 "address": short_address,
-                "phone": formatted_phone
+                "phone": formatted_phone,
+                "selected_flowers": order.get("selected_flowers", [])  # Добавлено поле выбранных букетов
             })
 
         return jsonify({"orders": orders}), 200
@@ -74,7 +74,7 @@ def get_all_orders():
         for order in response.data:
             formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
 
-            phone_clean = re.sub(r"\D", "", order["phone"]) 
+            phone_clean = re.sub(r"\D", "", order["phone"])
             if len(phone_clean) == 11:
                 formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
             else:
@@ -95,15 +95,14 @@ def get_all_orders():
                 "entrance": order.get("entrance", ""),
                 "phone": formatted_phone,
                 "created_date": created_date,  
-                "created_time": created_time  
+                "created_time": created_time,
+                "selected_flowers": order.get("selected_flowers", [])
             })
 
         return jsonify({"orders": orders}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
 
 
 @app.after_request
