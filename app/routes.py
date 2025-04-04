@@ -2,6 +2,10 @@ from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
 import json
 from app import app, supabase
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -100,6 +104,71 @@ def get_all_orders():
             })
 
         return jsonify({"orders": orders}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+
+import requests
+
+cached_token = {
+    "token": None,
+    "expires_at": None
+}
+
+BLOOOOM_API_URL = os.getenv("BLOOOOM_API_URL")
+BLOOOOM_USERNAME = os.getenv("BLOOOOM_USERNAME")
+BLOOOOM_PASSWORD = os.getenv("BLOOOOM_PASSWORD")
+
+
+def get_bloooom_token():
+    try:
+        if cached_token["token"]:
+            return cached_token["token"]
+
+        response = requests.post(f"{BLOOOOM_API_URL}/v1/employee/login", json={
+            "username": BLOOOOM_USERNAME,
+            "password": BLOOOOM_PASSWORD
+        })
+
+        if response.status_code == 200:
+            token = response.json().get("accessToken")
+            cached_token["token"] = token
+            return token
+        else:
+            raise Exception("Authentication failed")
+
+    except Exception as e:
+        print("Error during authentication:", e)
+        return None
+
+
+@app.route('/flowers', methods=['GET'])
+def get_flowers():
+    try:
+        token = get_bloooom_token()
+        if not token:
+            return jsonify({"error": "Не удалось получить токен"}), 401
+
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(f"{BLOOOOM_API_URL}/v1/bouquet/branch/3", headers=headers)
+
+        if response.status_code != 200:
+            return jsonify({"error": "Ошибка при получении букетов"}), 500
+
+        bouquets = response.json()
+        result = []
+
+        for flower in bouquets:
+            result.append({
+                "id": flower["id"],
+                "name": flower["name"],
+                "price": flower["price"],
+                "image": flower.get("bouquetPhotos", [{}])[0].get("url", "https://via.placeholder.com/150")
+            })
+
+        return jsonify(result), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
