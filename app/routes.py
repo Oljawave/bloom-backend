@@ -109,6 +109,55 @@ def get_all_orders():
         return jsonify({"error": str(e)}), 500
     
 
+@app.route('/orders/<int:order_id>', methods=['GET'])
+def get_order_by_id(order_id):
+    try:
+        
+        response = supabase.table("orders").select("*").eq("id", order_id).execute()
+
+        if not response.data:
+            return jsonify({"message": "Заказ не найден"}), 404
+
+        order = response.data[0]
+
+        formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
+
+        short_address = f'г. {order["city"]}, ул. {order["street"]} {order["building"]}'
+        if order.get("apartment"):
+            short_address += f', кв. {order["apartment"]}'
+
+        phone_clean = re.sub(r"\D", "", order["phone"])
+        if len(phone_clean) == 11:
+            formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
+        else:
+            formatted_phone = order["phone"]
+
+        created_at_dt = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+        created_date = created_at_dt.strftime("%d.%m.%Y")
+        created_time = created_at_dt.strftime("%H:%M:%S")
+
+        order_details = {
+            "order_id": order["id"],
+            "dates": formatted_dates,
+            "price_range": order["price_range"],
+            "city": order["city"],
+            "street_building": f'{order["street"]} {order["building"]}',
+            "apartment": order.get("apartment", ""),
+            "floor": order.get("floor", ""),
+            "entrance": order.get("entrance", ""),
+            "phone": formatted_phone,
+            "created_date": created_date,
+            "created_time": created_time,
+            "selected_flowers": order.get("selected_flowers", [])
+        }
+
+        return jsonify({"order": order_details}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+
 
 import requests
 
