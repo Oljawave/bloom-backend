@@ -132,6 +132,8 @@ def get_bloooom_token():
             "password": BLOOOOM_PASSWORD
         })
 
+        print("Login response:", response.status_code, response.text)
+
         if response.status_code == 200:
             token = response.json().get("accessToken")
             cached_token["token"] = token
@@ -144,6 +146,7 @@ def get_bloooom_token():
         return None
 
 
+
 @app.route('/flowers', methods=['GET'])
 def get_flowers():
     try:
@@ -152,7 +155,10 @@ def get_flowers():
             return jsonify({"error": "Не удалось получить токен"}), 401
 
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.get(f"{BLOOOOM_API_URL}/v1/bouquet/branch/3", headers=headers)
+        url = f"{BLOOOOM_API_URL}/v1/bouquet/branch/3"
+        print("Fetching bouquets from:", url)
+        response = requests.get(url, headers=headers)
+        print("Bouquet response:", response.status_code, response.text)
 
         if response.status_code != 200:
             return jsonify({"error": "Ошибка при получении букетов"}), 500
@@ -171,7 +177,9 @@ def get_flowers():
         return jsonify(result), 200
 
     except Exception as e:
+        print("Exception in /flowers:", str(e))
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.after_request
