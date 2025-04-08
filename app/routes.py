@@ -230,6 +230,37 @@ def get_flowers():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/flowers/<int:bouquet_id>', methods=['GET'])
+def get_flower_by_id(bouquet_id):
+    try:
+        token = get_bloooom_token()
+        if not token:
+            return jsonify({"error": "Не удалось получить токен"}), 401
+
+        headers = {"Authorization": f"Bearer {token}"}
+        url = f"{BLOOOOM_API_URL}/v1/bouquet/{bouquet_id}"
+        print("Fetching bouquet by ID from:", url)
+        response = requests.get(url, headers=headers)
+        print("Bouquet by ID response:", response.status_code, response.text)
+
+        if response.status_code != 200:
+            return jsonify({"error": "Букет не найден"}), 404
+
+        flower = response.json()
+        result = {
+            "id": flower["id"],
+            "name": flower["name"],
+            "price": flower["price"],
+            "image": flower.get("bouquetPhotos", [{}])[0].get("url", "https://via.placeholder.com/150")
+        }
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("Exception in /flowers/<id>:", str(e))
+        return jsonify({"error": str(e)}), 500
+
+
 
 @app.after_request
 def after_request(response):
