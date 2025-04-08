@@ -90,6 +90,7 @@ def get_all_orders():
 
             orders.append({
                 "order_id": order["id"],
+                "user_id": order["user_id"],
                 "dates": formatted_dates,
                 "price_range": order["price_range"],
                 "city": order["city"],
@@ -138,6 +139,7 @@ def get_order_by_id(order_id):
 
         order_details = {
             "order_id": order["id"],
+            "user_id": order["user_id"],
             "dates": formatted_dates,
             "price_range": order["price_range"],
             "city": order["city"],
