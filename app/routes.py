@@ -252,32 +252,6 @@ def get_bouquet_by_id(bouquet_id):
         if bouquet.get("branchBouquetInfo"):
             price = bouquet["branchBouquetInfo"][0].get("price")
 
-        # Получаем информацию о цветах по ID
-        selected_flowers = bouquet.get("selected_flowers", [])
-        flowers_info = []
-
-        for flower_id in selected_flowers:
-            flower_url = f"https://bloom-backend-production.up.railway.app/flowers/{flower_id}"
-            flower_response = requests.get(flower_url, headers=headers)
-
-            if flower_response.status_code == 200:
-                flower_data = flower_response.json()
-                flowers_info.append({
-                    "id": flower_data["id"],
-                    "name": flower_data["name"],
-                    "image": flower_data.get("image", "https://via.placeholder.com/150"),
-                    "price": flower_data.get("price"),
-                    "description": flower_data.get("description", "Нет описания"),
-                })
-            else:
-                flowers_info.append({
-                    "id": flower_id,
-                    "name": "Не найдено",
-                    "image": "https://via.placeholder.com/150",
-                    "price": "Не доступно",
-                    "description": "Нет описания",
-                })
-
         result = {
             "id": bouquet["id"],
             "name": bouquet["name"],
@@ -285,7 +259,7 @@ def get_bouquet_by_id(bouquet_id):
             "style": bouquet.get("bouquetStyle"),
             "image": image_url,
             "price": price,
-            "flowers": flowers_info,
+            "flowers": bouquet.get("flowerVarietyInfo", []),
             "additional_elements": bouquet.get("additionalElements", []),
         }
 
@@ -294,7 +268,6 @@ def get_bouquet_by_id(bouquet_id):
     except Exception as e:
         print("Exception in /flowers/<id>:", str(e))
         return jsonify({"error": str(e)}), 500
-
 
 
 
