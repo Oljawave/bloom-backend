@@ -57,7 +57,7 @@ def get_orders(user_id):
                 "price_range": order["price_range"],
                 "address": short_address,
                 "phone": formatted_phone,
-                "selected_flowers": order.get("selected_flowers", [])  # Добавлено поле выбранных букетов
+                "selected_flowers": order.get("selected_flowers", [])
             })
 
         return jsonify({"orders": orders}), 200
@@ -109,7 +109,7 @@ def get_all_orders():
         return jsonify({"error": str(e)}), 500
     
 
-@app.route('/orders/<int:order_id>', methods=['GET'])
+@app.route('/orders/by-id/<int:order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     try:
         
