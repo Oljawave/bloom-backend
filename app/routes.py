@@ -231,7 +231,7 @@ def get_flowers():
 
 
 @app.route('/flowers/<int:bouquet_id>', methods=['GET'])
-def get_flower_by_id(bouquet_id):
+def get_bouquet_by_id(bouquet_id):
     try:
         token = get_bloooom_token()
         if not token:
@@ -239,19 +239,28 @@ def get_flower_by_id(bouquet_id):
 
         headers = {"Authorization": f"Bearer {token}"}
         url = f"{BLOOOOM_API_URL}/v1/bouquet/{bouquet_id}"
-        print("Fetching bouquet by ID from:", url)
         response = requests.get(url, headers=headers)
-        print("Bouquet by ID response:", response.status_code, response.text)
 
         if response.status_code != 200:
-            return jsonify({"error": "Букет не найден"}), 404
+            return jsonify({"error": "Букет не найден"}), response.status_code
 
-        flower = response.json()
+        bouquet = response.json()
+
+        image_url = bouquet.get("bouquetPhotos", [{}])[0].get("url", "https://via.placeholder.com/150")
+
+        price = None
+        if bouquet.get("branchBouquetInfo"):
+            price = bouquet["branchBouquetInfo"][0].get("price")
+
         result = {
-            "id": flower["id"],
-            "name": flower["name"],
-            "price": flower["price"],
-            "image": flower.get("bouquetPhotos", [{}])[0].get("url", "https://via.placeholder.com/150")
+            "id": bouquet["id"],
+            "name": bouquet["name"],
+            "author": bouquet.get("author"),
+            "style": bouquet.get("bouquetStyle"),
+            "image": image_url,
+            "price": price,
+            "flowers": bouquet.get("flowerVarietyInfo", []),
+            "additional_elements": bouquet.get("additionalElements", []),
         }
 
         return jsonify(result), 200
@@ -259,6 +268,7 @@ def get_flower_by_id(bouquet_id):
     except Exception as e:
         print("Exception in /flowers/<id>:", str(e))
         return jsonify({"error": str(e)}), 500
+
 
 
 
