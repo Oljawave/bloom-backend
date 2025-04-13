@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route('/orders', methods=['POST'])
