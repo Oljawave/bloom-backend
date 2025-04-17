@@ -183,7 +183,6 @@ def get_bloooom_token():
             "username": BLOOOOM_USERNAME,
             "password": BLOOOOM_PASSWORD
         })
-
         print("Login response:", response.status_code, response.text)
 
         if response.status_code == 200:
