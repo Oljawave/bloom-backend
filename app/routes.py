@@ -31,17 +31,10 @@ import re
 @app.route('/orders/<int:user_id>', methods=['GET'])
 def get_orders(user_id):
     try:
-        # Выполняем запрос с JOIN для получения статуса с названием
-        query = """
-            SELECT 
-                o.id, o.user_id, o.selected_dates, o.price_range, o.city, o.street, o.building, 
-                o.apartment, o.phone, o.selected_flowers, o.status_id, 
-                s.name_ru AS status_name
-            FROM orders o
-            JOIN order_statuses s ON o.status_id = s.id
-            WHERE o.user_id = %s
-        """
-        response = supabase.postgres.execute(query, (user_id,))
+        # Выполняем запрос с объединением таблиц
+        response = supabase.table("orders").select(
+            "orders.id, orders.selected_dates, orders.city, orders.street, orders.building, orders.apartment, orders.phone, orders.price_range, orders.selected_flowers, order_statuses.name_ru"
+        ).eq("orders.user_id", user_id).join("order_statuses", "orders.status_id", "order_statuses.id").execute()
 
         if not response.data:
             return jsonify({"message": "Заказы не найдены"}), 404
@@ -67,13 +60,14 @@ def get_orders(user_id):
                 "address": short_address,
                 "phone": formatted_phone,
                 "selected_flowers": order.get("selected_flowers", []),
-                "status_name": order["status_name"],
+                "status_name_ru": order["name_ru"]
             })
 
         return jsonify({"orders": orders}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/orders', methods=['GET'])
