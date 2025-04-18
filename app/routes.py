@@ -31,7 +31,17 @@ import re
 @app.route('/orders/<int:user_id>', methods=['GET'])
 def get_orders(user_id):
     try:
-        response = supabase.table("orders").select("*").eq("user_id", user_id).execute()
+        # Выполняем запрос с JOIN для получения статуса с названием
+        query = """
+            SELECT 
+                o.id, o.user_id, o.selected_dates, o.price_range, o.city, o.street, o.building, 
+                o.apartment, o.phone, o.selected_flowers, o.status_id, 
+                s.name_ru AS status_name
+            FROM orders o
+            JOIN order_statuses s ON o.status_id = s.id
+            WHERE o.user_id = %s
+        """
+        response = supabase.postgres.execute(query, (user_id,))
 
         if not response.data:
             return jsonify({"message": "Заказы не найдены"}), 404
@@ -56,7 +66,8 @@ def get_orders(user_id):
                 "price_range": order["price_range"],
                 "address": short_address,
                 "phone": formatted_phone,
-                "selected_flowers": order.get("selected_flowers", [])
+                "selected_flowers": order.get("selected_flowers", []),
+                "status_name": order["status_name"],
             })
 
         return jsonify({"orders": orders}), 200
