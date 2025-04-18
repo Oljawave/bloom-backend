@@ -31,10 +31,7 @@ import re
 @app.route('/orders/<int:user_id>', methods=['GET'])
 def get_orders(user_id):
     try:
-        # Выполняем запрос с объединением таблиц
-        response = supabase.table("orders").select(
-            "orders.id, orders.selected_dates, orders.city, orders.street, orders.building, orders.apartment, orders.phone, orders.price_range, orders.selected_flowers, order_statuses.name_ru"
-        ).eq("orders.user_id", user_id).join("order_statuses", "orders.status_id", "order_statuses.id").execute()
+        response = supabase.table("orders").select("*").eq("user_id", user_id).execute()
 
         if not response.data:
             return jsonify({"message": "Заказы не найдены"}), 404
@@ -59,15 +56,13 @@ def get_orders(user_id):
                 "price_range": order["price_range"],
                 "address": short_address,
                 "phone": formatted_phone,
-                "selected_flowers": order.get("selected_flowers", []),
-                "status_name_ru": order["name_ru"]
+                "selected_flowers": order.get("selected_flowers", [])
             })
 
         return jsonify({"orders": orders}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 @app.route('/orders', methods=['GET'])
@@ -118,13 +113,21 @@ def get_all_orders():
 @app.route('/orders/by-id/<int:order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     try:
-        
+        # Получаем заказ по ID
         response = supabase.table("orders").select("*").eq("id", order_id).execute()
 
         if not response.data:
             return jsonify({"message": "Заказ не найден"}), 404
 
         order = response.data[0]
+
+        # Получаем статус по status_id
+        status_response = supabase.table("order_statuses").select("name_ru").eq("id", order["status_id"]).execute()
+
+        if not status_response.data:
+            return jsonify({"message": "Статус не найден"}), 404
+
+        status_name_ru = status_response.data[0]["name_ru"]
 
         formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
 
@@ -142,9 +145,11 @@ def get_order_by_id(order_id):
         created_date = created_at_dt.strftime("%d.%m.%Y")
         created_time = created_at_dt.strftime("%H:%M:%S")
 
+        # Добавляем статус к деталям заказа
         order_details = {
             "order_id": order["id"],
             "user_id": order["user_id"],
+            "status_name_ru": status_name_ru,  # Добавили статус
             "dates": formatted_dates,
             "comment": order["comment"],
             "price_range": order["price_range"],
@@ -163,6 +168,7 @@ def get_order_by_id(order_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
     
 
