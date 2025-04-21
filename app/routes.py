@@ -113,7 +113,6 @@ def get_all_orders():
 @app.route('/orders/by-id/<int:order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     try:
-
         response = supabase.table("orders").select("*").eq("id", order_id).execute()
 
         if not response.data:
@@ -147,7 +146,8 @@ def get_order_by_id(order_id):
         order_details = {
             "order_id": order["id"],
             "user_id": order["user_id"],
-            "status_name_ru": status_name_ru,
+            "status_id": order["status_id"],
+            "status_name_ru": status_name_ru, 
             "dates": formatted_dates,
             "comment": order["comment"],
             "price_range": order["price_range"],
@@ -166,6 +166,7 @@ def get_order_by_id(order_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 @app.route('/orders/<int:order_id>/status', methods=['PUT'])
