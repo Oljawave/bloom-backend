@@ -15,6 +15,11 @@ def create_order():
         response = supabase.table("orders").insert(data).execute()
 
         if response.data:
+
+            order_id = response.data[0]["id"]
+            
+            send_telegram_notification(order_id)
+
             return Response(
                 json.dumps({"message": "Order created!", "order": response.data}, ensure_ascii=False),
                 status=201,
@@ -23,6 +28,7 @@ def create_order():
         return jsonify({"error": "Failed to create order"}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 from datetime import datetime
@@ -304,6 +310,44 @@ def get_bouquet_by_id(bouquet_id):
     except Exception as e:
         print("Exception in /flowers/<id>:", str(e))
         return jsonify({"error": str(e)}), 500
+    
+
+import requests
+
+def send_telegram_notification(order_id):
+    try:
+        TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+        TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+        ORDER_URL = os.getenv("ORDER_URL")
+
+        message = f"""
+                    <b>Новый заказ поступил!</b>
+
+                    📦 Заказ №{order_id} успешно создан.
+
+                    Вы можете просмотреть детали заказа по следующей ссылке:
+                    <a href="{ORDER_URL}">Перейти к заказу</a>
+
+                    Благодарим за работу с нами!
+                """
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+
+        response = requests.post(url, data=payload)
+
+        if response.status_code == 200:
+            print(f"Уведомление успешно отправлено в Telegram для заказа {order_id}")
+        else:
+            print(f"Ошибка при отправке уведомления в Telegram: {response.text}")
+
+    except Exception as e:
+        print(f"Ошибка при отправке уведомления в Telegram: {str(e)}")
+
 
 
 
