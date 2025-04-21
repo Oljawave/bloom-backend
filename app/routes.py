@@ -149,7 +149,7 @@ def get_order_by_id(order_id):
         order_details = {
             "order_id": order["id"],
             "user_id": order["user_id"],
-            "status_name_ru": status_name_ru,  # Добавили статус
+            "status_name_ru": status_name_ru,
             "dates": formatted_dates,
             "comment": order["comment"],
             "price_range": order["price_range"],
