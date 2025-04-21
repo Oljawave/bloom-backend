@@ -202,6 +202,31 @@ def update_order_status(order_id):
         return jsonify({"error": str(e)}), 500
 
 
+import os
+import requests
+from flask import jsonify, request
+
+@app.route('/orders/<int:order_id>/delete', methods=['DELETE'])
+def delete_order(order_id):
+    try:
+
+        chat_id = request.json.get("chat_id")
+
+        if chat_id != os.getenv("TELEGRAM_CHAT_ID"):
+            return jsonify({"error": "У вас нет доступа для выполнения этого действия"}), 403
+
+        response = supabase.table("orders").delete().eq("id", order_id).execute()
+
+        if response.data:
+            return jsonify({"message": f"Заказ {order_id} успешно удалён"}), 200
+        else:
+            return jsonify({"error": "Не удалось удалить заказ"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 import requests
 
 cached_token = {
