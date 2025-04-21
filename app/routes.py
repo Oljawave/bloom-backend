@@ -75,13 +75,17 @@ def get_all_orders():
 
         orders = []
         for order in response.data:
+
+            status_response = supabase.table("order_statuses").select("name_ru").eq("id", order["status_id"]).execute()
+            status_name_ru = status_response.data[0]["name_ru"] if status_response.data else "Неизвестно"
+
             formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
 
             phone_clean = re.sub(r"\D", "", order["phone"])
             if len(phone_clean) == 11:
                 formatted_phone = f"+{phone_clean[0]} ({phone_clean[1:4]}) {phone_clean[4:7]}-{phone_clean[7:9]}-{phone_clean[9:11]}"
             else:
-                formatted_phone = order["phone"]  
+                formatted_phone = order["phone"]
 
             created_at_dt = datetime.strptime(order["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
             created_date = created_at_dt.strftime("%d.%m.%Y")
@@ -90,6 +94,8 @@ def get_all_orders():
             orders.append({
                 "order_id": order["id"],
                 "user_id": order["user_id"],
+                "status_id": order["status_id"],
+                "status_name_ru": status_name_ru,
                 "dates": formatted_dates,
                 "comment": order["comment"],
                 "price_range": order["price_range"],
@@ -99,7 +105,7 @@ def get_all_orders():
                 "floor": order.get("floor", ""),
                 "entrance": order.get("entrance", ""),
                 "phone": formatted_phone,
-                "created_date": created_date,  
+                "created_date": created_date,
                 "created_time": created_time,
                 "selected_flowers": order.get("selected_flowers", [])
             })
@@ -108,6 +114,7 @@ def get_all_orders():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 @app.route('/orders/by-id/<int:order_id>', methods=['GET'])
