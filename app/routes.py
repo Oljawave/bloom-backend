@@ -113,7 +113,7 @@ def get_all_orders():
 @app.route('/orders/by-id/<int:order_id>', methods=['GET'])
 def get_order_by_id(order_id):
     try:
-        # Получаем заказ по ID
+
         response = supabase.table("orders").select("*").eq("id", order_id).execute()
 
         if not response.data:
@@ -121,7 +121,6 @@ def get_order_by_id(order_id):
 
         order = response.data[0]
 
-        # Получаем статус по status_id
         status_response = supabase.table("order_statuses").select("name_ru").eq("id", order["status_id"]).execute()
 
         if not status_response.data:
@@ -145,7 +144,6 @@ def get_order_by_id(order_id):
         created_date = created_at_dt.strftime("%d.%m.%Y")
         created_time = created_at_dt.strftime("%H:%M:%S")
 
-        # Добавляем статус к деталям заказа
         order_details = {
             "order_id": order["id"],
             "user_id": order["user_id"],
@@ -168,9 +166,26 @@ def get_order_by_id(order_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
     
+
+@app.route('/orders/<int:order_id>/status', methods=['PUT'])
+def update_order_status(order_id):
+    try:
+        data = request.json
+        new_status_id = data.get("status_id")
+
+        if new_status_id is None:
+            return jsonify({"error": "status_id не указан"}), 400
+
+        response = supabase.table("orders").update({"status_id": new_status_id}).eq("id", order_id).execute()
+
+        if response.data:
+            return jsonify({"message": "Статус заказа обновлен", "order": response.data[0]}), 200
+        else:
+            return jsonify({"error": "Не удалось обновить заказ"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 import requests
