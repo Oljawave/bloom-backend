@@ -44,6 +44,10 @@ def get_orders(user_id):
 
         orders = []
         for order in response.data:
+
+            status_response = supabase.table("order_statuses").select("name_ru").eq("id", order["status_id"]).execute()
+            status_name_ru = status_response.data[0]["name_ru"] if status_response.data else "Неизвестно"
+
             formatted_dates = [datetime.strptime(date, "%Y-%m-%d").strftime("%d.%m") for date in order["selected_dates"]]
 
             short_address = f'г. {order["city"]}, ул. {order["street"]} {order["building"]}'
@@ -58,6 +62,8 @@ def get_orders(user_id):
 
             orders.append({
                 "order_id": order["id"],
+                "status_id": order["status_id"],
+                "status_name_ru": status_name_ru,
                 "dates": formatted_dates,
                 "price_range": order["price_range"],
                 "address": short_address,
@@ -69,6 +75,7 @@ def get_orders(user_id):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 @app.route('/orders', methods=['GET'])
